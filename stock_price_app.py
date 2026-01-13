@@ -16,12 +16,20 @@ stock = st.text_input("Enter the stock here", stock)
 
 def get_stock_history(ticker: str, start_date: datetime, end_date: datetime) -> pd.DataFrame:
     attempts = [
-        {"start": start_date, "end": end_date},
-        {"period": "10y"},
-        {"period": "max"},
+        ("download", {"start": start_date, "end": end_date}),
+        ("download", {"period": "10y"}),
+        ("download", {"period": "5y"}),
+        ("download", {"period": "max"}),
+        ("history", {"period": "10y"}),
+        ("history", {"period": "5y"}),
+        ("history", {"period": "max"}),
     ]
-    for params in attempts:
-        data = yf.download(ticker, progress=False, **params)
+    ticker_obj = yf.Ticker(ticker)
+    for method, params in attempts:
+        if method == "download":
+            data = yf.download(ticker, progress=False, **params)
+        else:
+            data = ticker_obj.history(**params)
         if not data.empty:
             return data
     return pd.DataFrame()
