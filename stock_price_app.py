@@ -14,11 +14,24 @@ stock = "GOOG"
 stock = st.text_input("Enter the stock here", stock)
 
 stock_data = yf.download(stock, start, end)
+if stock_data.empty:
+    st.error("Yahoo Finance returned no rows for this ticker/time range. Try another symbol or shorter timeframe.")
+    st.stop()
 
-stock_data.columns = stock_data.columns.get_level_values(0)
+if isinstance(stock_data.columns, pd.MultiIndex):
+    stock_data.columns = stock_data.columns.get_level_values(0)
 
+if "Close" not in stock_data.columns:
+    st.error("Downloaded data did not include a 'Close' column; cannot continue.")
+    st.stop()
+
+stock_data = stock_data.ffill().dropna()
 splitting_len = int(len(stock_data) * 0.9)  
 x_test = pd.DataFrame(stock_data['Close'][splitting_len:])
+
+if len(x_test) <= 100:
+    st.error("Not enough closing-price samples after the train/test split. Try expanding the history window.")
+    st.stop()
 
 model = load_model("Latest_google_model.keras")
 st.subheader("All Data")
@@ -113,5 +126,3 @@ plt.xlabel('days')
 plt.ylabel('Close Price')
 plt.title('Closing Price of Google')
 st.pyplot(fig)
-
-
