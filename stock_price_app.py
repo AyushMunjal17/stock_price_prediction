@@ -26,10 +26,13 @@ def get_stock_history(ticker: str, start_date: datetime, end_date: datetime) -> 
     ]
     ticker_obj = yf.Ticker(ticker)
     for method, params in attempts:
-        if method == "download":
-            data = yf.download(ticker, progress=False, **params)
-        else:
-            data = ticker_obj.history(**params)
+        try:
+            if method == "download":
+                data = yf.download(ticker, progress=False, **params)
+            else:
+                data = ticker_obj.history(**params)
+        except Exception:
+            continue
         if not data.empty:
             return data
     return pd.DataFrame()
@@ -145,5 +148,5 @@ for i in range(len(future_results)):
     plt.text(i, future_results[i], int(future_results[i][0]))
 plt.xlabel('days')
 plt.ylabel('Close Price')
-plt.title('Closing Price of Google')
+plt.title('Closing Price')
 st.pyplot(fig)
