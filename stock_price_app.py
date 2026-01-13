@@ -7,15 +7,28 @@ import yfinance as yf
 
 st.title("Stock Price Predictor App")
 
-from datetime import datetime
+from datetime import datetime, timedelta
 end = datetime.now()
-start = datetime(end.year-10, end.month, end.day)
+default_span = timedelta(days=365 * 10)
+start = end - default_span
 stock = "GOOG"
 stock = st.text_input("Enter the stock here", stock)
 
-stock_data = yf.download(stock, start, end)
+def get_stock_history(ticker: str, start_date: datetime, end_date: datetime) -> pd.DataFrame:
+    attempts = [
+        {"start": start_date, "end": end_date},
+        {"period": "10y"},
+        {"period": "max"},
+    ]
+    for params in attempts:
+        data = yf.download(ticker, progress=False, **params)
+        if not data.empty:
+            return data
+    return pd.DataFrame()
+
+stock_data = get_stock_history(stock, start, end)
 if stock_data.empty:
-    st.error("Yahoo Finance returned no rows for this ticker/time range. Try another symbol or shorter timeframe.")
+    st.error("Yahoo Finance returned no rows for this ticker/time range. Try another symbol.")
     st.stop()
 
 if isinstance(stock_data.columns, pd.MultiIndex):
